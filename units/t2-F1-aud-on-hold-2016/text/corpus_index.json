@@ -1,0 +1,77 @@
+{
+  "card_id": "t2-F1-aud-on-hold-2016",
+  "asof": "2016-11-01",
+  "note": "Frozen dated corpus; every timestamp <= asof (gate g2_cutoff_resource). Minutes/COT timestamps are PUBLIC RELEASE dates, not meeting/report dates.",
+  "documents": [
+    {
+      "doc_id": "bis_draghi_2016-07-06",
+      "timestamp": "2016-07-06",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_draghi_2016-07-06.txt"
+    },
+    {
+      "doc_id": "bis_kuroda_2016-08-23",
+      "timestamp": "2016-08-23",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_kuroda_2016-08-23.txt"
+    },
+    {
+      "doc_id": "bis_lowe_2016-09-08",
+      "timestamp": "2016-09-08",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_lowe_2016-09-08.txt"
+    },
+    {
+      "doc_id": "fomc-statement-2016-09-21",
+      "timestamp": "2016-09-21",
+      "source": "Federal Reserve",
+      "doc_type": "fomc_statement",
+      "file": "fomc_statement_20160921.txt"
+    },
+    {
+      "doc_id": "bis_lowe_2016-09-22",
+      "timestamp": "2016-09-22",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_lowe_2016-09-22.txt"
+    },
+    {
+      "doc_id": "macro_release-2016-10-07",
+      "timestamp": "2016-10-07",
+      "source": "BLS",
+      "doc_type": "macro_release",
+      "file": "empsit_2016-10-07.txt"
+    },
+    {
+      "doc_id": "fomc-minutes-20160921",
+      "timestamp": "2016-10-12",
+      "source": "Federal Reserve (FOMC)",
+      "doc_type": "fomc_minutes",
+      "file": "fomc_minutes_20160921_released_2016-10-12.txt"
+    },
+    {
+      "doc_id": "bis_lowe_2016-10-18",
+      "timestamp": "2016-10-18",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_lowe_2016-10-18.txt"
+    },
+    {
+      "doc_id": "beige_book-2016-10-31",
+      "timestamp": "2016-10-31",
+      "source": "Federal Reserve (Beige Book)",
+      "doc_type": "beige_book",
+      "file": "beigebook_201610.txt"
+    },
+    {
+      "doc_id": "rba_mp_decision_2016-11-01",
+      "timestamp": "2016-11-01",
+      "source": "Reserve Bank of Australia",
+      "doc_type": "central_bank_decision",
+      "file": "rba_mp_decision_2016-11-01.txt"
+    }
+  ]
+}

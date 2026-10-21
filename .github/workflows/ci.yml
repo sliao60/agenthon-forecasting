@@ -1,0 +1,254 @@
+name: Track 2 CI
+
+# Each track repo's root IS the public folder, so all paths below are root-relative.
+#
+# ## What changed at the 2026-08-22 freeze
+#
+# The pre-freeze workflow had three jobs and **no test job**. `ruff` and `mypy` ran over
+# `scoring baselines` — the back-compat shim and the baselines — and never over the canonical
+# package `qfbench2_track_forecasting/`, which is the code that decides every score.
+# `python -m pytest -q` returned "no tests ran". Actions were pinned to mutable major tags, and the
+# toolkit was pinned at `v2.0.0`, a tag that predates the shared answer gate the private staging
+# step depends on.
+#
+# Now: the canonical package is linted, type-checked and tested; the shim is checked as a shim;
+# every action is pinned to a full commit SHA; and the toolkit is installed at a released tag.
+#
+# ## Why the firewall is its own job, and why it stays one
+#
+# The toolkit installs anonymously from the public Agenthon2026-public repository, so no credential
+# is involved and every job here runs on fork pull requests. What a toolkit install still costs is
+# availability: steps after a failed install are SKIPPED, so any check placed behind one silently
+# does not run in exactly the case that matters most. The `firewall` job below is stdlib-only and
+# therefore runs even when that install breaks. Do not fold it into the toolkit-backed jobs.
+
+on:
+  push:
+    branches: [main, "remediation/**", "task/**", "track2/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # The toolkit release this repository is built and tested against, and the SINGLE place this
+  # workflow names one -- every install below reads it, so the jobs cannot drift from each other
+  # or from this line. It must also stay the string the README pins and the Dockerfile builds on;
+  # the `pin-consistency` step in the firewall job now enforces that rather than trusting this
+  # comment, because the v2.4.3 bump moved the README and left this line behind, and the v2.4.4
+  # bump moved this line and left the Dockerfile behind. Two earlier tags
+  # fail in opposite directions: v2.3.1 refuses a descriptor the evaluation verifier accepts (it
+  # demands a non-empty `models`), and v2.4.2 ACCEPTS one the verifier no longer does (its
+  # category enum still carries `byo-large`/`byo-small`, withdrawn by the 2026-09-18 ruling), so
+  # testing against either made a green build mean nothing. Keep this a TAG, never a branch -- a
+  # floating ref lets a local result and a scored result diverge with no diff.
+  TOOLKIT_TAG: v2.6.1
+  # Private staging tests the scorer against a pinned commit of the toolkit's publication
+  # candidate (`Agenthon2026-public-staging`) instead of the released tag. That began while
+  # `qfbench2_track_forecasting.resolution` needed `contracts.forecast_protocol` and no released
+  # tag carried it; released tags carry it since v2.4.4, so the public install and the staging
+  # install both provide the module. The candidate is pinned to the v2.6.1 release commit. Only the `test` job uses the candidate, only when
+  # this workflow runs in a `-staging` repository, and it needs the read token that private
+  # checkouts need. The public repository keeps the anonymous tag install above.
+  QFBENCH2_CANDIDATE_COMMON_REF: 03c50a0036aaf72675d353aef4c7c01ca86d1fcf
+
+jobs:
+  # Runs FIRST and installs nothing at all, so it still runs when the toolkit install breaks.
+  firewall:
+    name: Firewall (stdlib only, no secret — runs on forks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.13"
+      - name: Card, track, split and canary checks
+        run: python .github/validate_units.py forecasting --stdlib-only
+      # `TOOLKIT_TAG` above claims it "must also stay the string the README pins". Nothing
+      # enforced that, and on 2026-09-18 it stopped being true: the bump to v2.4.3 moved the
+      # README's install commands and left ci.yml and the Dockerfile on v2.4.2, so for three
+      # days CI and the reference image validated descriptors against a withdrawn category
+      # enum. It recurred on 2026-09-21: the bump to v2.4.4 moved ci.yml and the README and
+      # again left the Dockerfile on v2.4.2. This step is the enforcement the comment assumed.
+      # stdlib/shell only, so it runs even when the toolkit install is broken.
+      - name: README, Dockerfile and this workflow pin the same toolkit tag
+        id: pin-consistency
+        run: |
+          set -euo pipefail
+          expected='${{ env.TOOLKIT_TAG }}'
+          # `|| true`: under pipefail a grep with no match would end the step right here, before
+          # the named error below could say why. An empty result still fails, just visibly.
+          readme=$(grep -oE 'Agenthon2026-public\.git@v[0-9]+\.[0-9]+\.[0-9]+#subdirectory=common' README.md \
+                   | sed -E 's|.*@(v[0-9.]+)#.*|\1|' | sort -u || true)
+          docker=$(grep -oE 'refs/tags/v[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz' Dockerfile \
+                   | sed -E 's|refs/tags/(v[0-9.]+)\.tar\.gz|\1|' | sort -u || true)
+          echo "ci.yml=$expected  README=[$readme]  Dockerfile=[$docker]"
+          if [ -z "$readme" ] || [ -z "$docker" ]; then
+            echo "could not find a pinned toolkit install in README.md or Dockerfile" >&2
+            exit 1
+          fi
+          for got in $readme $docker; do
+            if [ "$got" != "$expected" ]; then
+              echo "toolkit pin disagrees: this workflow installs $expected, a file names $got" >&2
+              exit 1
+            fi
+          done
+          echo "all three pin $expected"
+      # A grep, not a promise. Nothing in a public repository may name a reference artifact.
+      - name: No reference-side path or filename in the public tree
+        run: |
+          if git ls-files | grep -E '(^|/)(reference|realized\.parquet|ref_scale\.json|PENDING\.json)($|/)'; then
+            echo "a reference-side path exists in the public tree" >&2
+            exit 1
+          fi
+          echo "no reference-side path found"
+
+  lint-type:
+    name: Lint + type check (ruff + mypy over the CANONICAL package)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.13"
+      - name: Install tools + pinned shared toolkit
+        run: |
+          python -m pip install --upgrade pip
+          # mypy must be able to read the numpy it is handed. numpy arrives transitively via
+          # qfbench2-common; if a pinned-and-ageing type checker stops parsing it, pin numpy here
+          # too rather than pinning mypy further back.
+          pip install "ruff==0.4.7" "mypy==1.19.1"
+          pip install "qfbench2-common @ git+https://github.com/Agenthon-2026/Agenthon2026-public.git@${{ env.TOOLKIT_TAG }}#subdirectory=common"
+      - name: Confirm the toolkit is importable
+        # The job used to gate on a private token. It no longer needs one -- the toolkit
+        # installs from its public repository -- but the discipline the old guard encoded
+        # is worth keeping: a job that cannot get its dependency must FAIL, never skip to
+        # green. This now checks the thing that actually matters.
+        run: |
+          python - <<'PYEOF'
+          import sys
+          try:
+              from qfbench2_common.contracts import CONTRACT_SET
+          except Exception as exc:
+              sys.exit(f"shared toolkit not importable ({exc}); this job MUST NOT report green")
+          print("contract set", CONTRACT_SET)
+          PYEOF
+      - name: Ruff lint
+        run: ruff check qfbench2_track_forecasting tests scoring baselines
+      - name: Ruff format check
+        run: ruff format --check qfbench2_track_forecasting tests scoring baselines
+      - name: Mypy (strict) over the canonical package
+        run: mypy --strict --ignore-missing-imports qfbench2_track_forecasting
+      - name: Mypy (strict) over the shim and baselines
+        run: mypy --strict --ignore-missing-imports scoring baselines
+
+  test:
+    name: Test the canonical scorer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.13"
+      - name: Require private candidate toolkit access in staging
+        if: endsWith(github.repository, '-staging')
+        env:
+          TOOLKIT_TOKEN: ${{ secrets.AGENTHON_TOOLKIT_TOKEN }}
+        run: test -n "$TOOLKIT_TOKEN"
+      - name: Check out the exact publication-candidate toolkit in staging
+        if: endsWith(github.repository, '-staging')
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          repository: Agenthon-2026/Agenthon2026-public-staging
+          ref: ${{ env.QFBENCH2_CANDIDATE_COMMON_REF }}
+          token: ${{ secrets.AGENTHON_TOOLKIT_TOKEN }}
+          path: .ci-toolkit
+          persist-credentials: false
+          lfs: false
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [[ "$GITHUB_REPOSITORY" == *-staging ]]; then
+            test "$(git -C .ci-toolkit rev-parse HEAD)" = "$QFBENCH2_CANDIDATE_COMMON_REF"
+            pip install ./.ci-toolkit/common
+          else
+            pip install "qfbench2-common @ git+https://github.com/Agenthon-2026/Agenthon2026-public.git@${{ env.TOOLKIT_TAG }}#subdirectory=common"
+          fi
+          pip install -e ".[test]"
+          # Proven AFTER the last install that could replace the toolkit: the package's own
+          # `qfbench2-common>=2.3.1,<3` is satisfied by the candidate today, but a spec change
+          # would let pip pull the released tag back in above, and the assertion must see the
+          # final environment, not the intermediate one.
+          if [[ "$GITHUB_REPOSITORY" == *-staging ]]; then
+            python -c "from qfbench2_common.contracts import forecast_protocol; print(forecast_protocol.__name__)"
+          fi
+      - name: Confirm the toolkit is importable
+        # In the public repository this job needs no token -- the toolkit installs from its
+        # public repository; in `-staging` the candidate checkout above needs the read token
+        # and fails closed without it. Either way the discipline the old guard encoded
+        # is worth keeping: a job that cannot get its dependency must FAIL, never skip to
+        # green. This now checks the thing that actually matters.
+        run: |
+          python - <<'PYEOF'
+          import sys
+          try:
+              from qfbench2_common.contracts import CONTRACT_SET
+          except Exception as exc:
+              sys.exit(f"shared toolkit not importable ({exc}); this job MUST NOT report green")
+          print("contract set", CONTRACT_SET)
+          PYEOF
+      - name: Prove the contract set the suite was written against
+        run: |
+          python - <<'PY'
+          from qfbench2_common.contracts import CONTRACT_SET
+          expected = "1.1.0"
+          if CONTRACT_SET != expected:
+              raise SystemExit(
+                  f"installed contract_set {CONTRACT_SET!r} != {expected!r}; the pinned hub SHA "
+                  "and this suite disagree about the frozen contracts"
+              )
+          print("contract_set", CONTRACT_SET)
+          PY
+      # `jsonschema` is a REQUIRED production dependency: g1 raises an organizer fault without it
+      # rather than skipping validation. Asserted here so a packaging change cannot quietly make
+      # the gate unrunnable in the image.
+      - name: jsonschema is installed, because g1 refuses to run without it
+        run: python -c "import jsonschema; print(jsonschema.__name__)"
+      # No -q here: pyproject `addopts` already carries one, and a doubled -q suppresses pytest's
+      # summary line, so every green run of this step printed 171 dots and no count
+      # (measured 2026-09-02 on run 33655399470). The count is the evidence; the dots are not.
+      - name: Pytest
+        run: python -m pytest tests
+      - name: Regression suite (positive AND negative controls)
+        run: python regression_suite/run_regression.py
+
+  validate-units:
+    name: Validate units (+ manifests · public-safety)
+    needs: firewall
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: "3.13"
+      - name: Install pinned shared toolkit
+        run: |
+          python -m pip install --upgrade pip
+          pip install "qfbench2-common @ git+https://github.com/Agenthon-2026/Agenthon2026-public.git@${{ env.TOOLKIT_TAG }}#subdirectory=common"
+      - name: Confirm the toolkit is importable
+        # The job used to gate on a private token. It no longer needs one -- the toolkit
+        # installs from its public repository -- but the discipline the old guard encoded
+        # is worth keeping: a job that cannot get its dependency must FAIL, never skip to
+        # green. This now checks the thing that actually matters.
+        run: |
+          python - <<'PYEOF'
+          import sys
+          try:
+              from qfbench2_common.contracts import CONTRACT_SET
+          except Exception as exc:
+              sys.exit(f"shared toolkit not importable ({exc}); this job MUST NOT report green")
+          print("contract set", CONTRACT_SET)
+          PYEOF
+      - name: Validate all public units
+        run: python .github/validate_units.py forecasting

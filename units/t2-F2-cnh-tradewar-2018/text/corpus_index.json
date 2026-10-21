@@ -1,0 +1,108 @@
+{
+ "card_id": "t2-F2-cnh-tradewar-2018",
+ "asof": "2018-06-15",
+ "note": "Frozen dated corpus; every timestamp <= asof (gate g2_cutoff_resource). Minutes/COT timestamps are PUBLIC RELEASE dates, not meeting/report dates.",
+ "documents": [
+  {
+   "doc_id": "bis_hu_2010-07-15",
+   "timestamp": "2010-07-15",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_hu_2010-07-15.txt",
+   "institution": "People's Bank of China"
+  },
+  {
+   "doc_id": "bis_hu_2010-07-22",
+   "timestamp": "2010-07-22",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_hu_2010-07-22.txt",
+   "institution": "People's Bank of China"
+  },
+  {
+   "doc_id": "bis_hu_2010-07-30",
+   "timestamp": "2010-07-30",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_hu_2010-07-30.txt",
+   "institution": "People's Bank of China"
+  },
+  {
+   "doc_id": "bis_dudley_2018-03-01",
+   "timestamp": "2018-03-01",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_dudley_2018-03-01.txt"
+  },
+  {
+   "doc_id": "bis_draghi_2018-03-08",
+   "timestamp": "2018-03-08",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_draghi_2018-03-08.txt"
+  },
+  {
+   "doc_id": "bis_lautenschlager_2018-03-09",
+   "timestamp": "2018-03-09",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_lautenschlager_2018-03-09.txt"
+  },
+  {
+   "doc_id": "bis_cœuré_2018-03-12",
+   "timestamp": "2018-03-12",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_cœuré_2018-03-12.txt"
+  },
+  {
+   "doc_id": "bis_mersch_2018-03-14",
+   "timestamp": "2018-03-14",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_mersch_2018-03-14.txt"
+  },
+  {
+   "doc_id": "bis_coeure_2018-03-14",
+   "timestamp": "2018-03-14",
+   "source": "BIS central bankers' speeches",
+   "doc_type": "cb_speech",
+   "file": "bis_coeure_2018-03-14.txt"
+  },
+  {
+   "doc_id": "pboc_mp_decision_2018-04-18",
+   "timestamp": "2018-04-18",
+   "source": "People's Bank of China",
+   "doc_type": "central_bank_decision",
+   "file": "pboc_mp_decision_2018-04-18.txt"
+  },
+  {
+   "doc_id": "beige_book-2018-05-31",
+   "timestamp": "2018-05-31",
+   "source": "Federal Reserve (Beige Book)",
+   "doc_type": "beige_book",
+   "file": "beigebook_201805.txt"
+  },
+  {
+   "doc_id": "fomc-statement-2018-06-13",
+   "timestamp": "2018-06-13",
+   "source": "Federal Reserve",
+   "doc_type": "fomc_statement",
+   "file": "fomc_statement_20180613.txt"
+  },
+  {
+   "doc_id": "bis_gang_2018-06-14",
+   "timestamp": "2018-06-14",
+   "source": "BIS central bankers' speeches (full archive)",
+   "doc_type": "cb_speech",
+   "file": "bis_gang_2018-06-14.txt"
+  },
+  {
+   "doc_id": "ustr_section301_tariff_list_2018-06-15",
+   "timestamp": "2018-06-15",
+   "source": "official (see landmarks index)",
+   "doc_type": "landmark",
+   "file": "ustr_section301_tariff_list_2018-06-15.txt"
+  }
+ ]
+}

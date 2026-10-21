@@ -1,0 +1,63 @@
+{
+  "card_id": "t2-F2-abenomics-2012",
+  "asof": "2012-11-30",
+  "note": "Frozen dated corpus; every timestamp <= asof (gate g2_cutoff_resource). Minutes/COT timestamps are PUBLIC RELEASE dates, not meeting/report dates.",
+  "documents": [
+    {
+      "doc_id": "bis_bernanke_2012-08-07",
+      "timestamp": "2012-08-07",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_bernanke_2012-08-07.txt"
+    },
+    {
+      "doc_id": "bis_shirakawa_2012-10-14",
+      "timestamp": "2012-10-14",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_shirakawa_2012-10-14.txt"
+    },
+    {
+      "doc_id": "fomc-statement-2012-10-24",
+      "timestamp": "2012-10-24",
+      "source": "Federal Reserve",
+      "doc_type": "fomc_statement",
+      "file": "fomc_statement_20121024.txt"
+    },
+    {
+      "doc_id": "beige_book-2012-10-31",
+      "timestamp": "2012-10-31",
+      "source": "Federal Reserve (Beige Book)",
+      "doc_type": "beige_book",
+      "file": "beigebook_201210.txt"
+    },
+    {
+      "doc_id": "bis_shirakawa_2012-11-12",
+      "timestamp": "2012-11-12",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_shirakawa_2012-11-12.txt"
+    },
+    {
+      "doc_id": "bis_coeure_2012-11-15",
+      "timestamp": "2012-11-15",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_coeure_2012-11-15.txt"
+    },
+    {
+      "doc_id": "boj_mp_decision_2012-11-20",
+      "timestamp": "2012-11-20",
+      "source": "Bank of Japan",
+      "doc_type": "central_bank_decision",
+      "file": "boj_mp_decision_2012-11-20.txt"
+    },
+    {
+      "doc_id": "bis_shirakawa_2012-11-26",
+      "timestamp": "2012-11-26",
+      "source": "BIS central bankers' speeches (full archive)",
+      "doc_type": "cb_speech",
+      "file": "bis_shirakawa_2012-11-26.txt"
+    }
+  ]
+}

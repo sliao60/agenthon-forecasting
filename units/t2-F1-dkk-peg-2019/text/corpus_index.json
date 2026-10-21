@@ -1,0 +1,77 @@
+{
+  "card_id": "t2-F1-dkk-peg-2019",
+  "asof": "2019-03-01",
+  "note": "Frozen dated corpus; every timestamp <= asof (gate g2_cutoff_resource). Minutes/COT timestamps are PUBLIC RELEASE dates, not meeting/report dates.",
+  "documents": [
+    {
+      "doc_id": "nationalbanken_mp_decision_2016-03-10",
+      "timestamp": "2016-03-10",
+      "source": "Danmarks Nationalbank",
+      "doc_type": "central_bank_decision",
+      "file": "nationalbanken_mp_decision_2016-03-10.txt"
+    },
+    {
+      "doc_id": "bis_guindos_2018-11-28",
+      "timestamp": "2018-11-28",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_guindos_2018-11-28.txt"
+    },
+    {
+      "doc_id": "ecb_draghi_2019-01-15",
+      "timestamp": "2019-01-15",
+      "source": "ECB (all_ECB_speeches.csv)",
+      "doc_type": "cb_speech",
+      "file": "ecb_draghi_2019-01-15.txt"
+    },
+    {
+      "doc_id": "ecb_draghi_2019-01-15_2",
+      "timestamp": "2019-01-15",
+      "source": "ECB (all_ECB_speeches.csv)",
+      "doc_type": "cb_speech",
+      "file": "ecb_draghi_2019-01-15_2.txt"
+    },
+    {
+      "doc_id": "ecb_draghi_2019-01-28",
+      "timestamp": "2019-01-28",
+      "source": "ECB (all_ECB_speeches.csv)",
+      "doc_type": "cb_speech",
+      "file": "ecb_draghi_2019-01-28.txt"
+    },
+    {
+      "doc_id": "fomc-statement-2019-01-30",
+      "timestamp": "2019-01-30",
+      "source": "Federal Reserve",
+      "doc_type": "fomc_statement",
+      "file": "fomc_statement_20190130.txt"
+    },
+    {
+      "doc_id": "beige_book-2019-01-31",
+      "timestamp": "2019-01-31",
+      "source": "Federal Reserve (Beige Book)",
+      "doc_type": "beige_book",
+      "file": "beigebook_201901.txt"
+    },
+    {
+      "doc_id": "bis_mersch_2019-02-07",
+      "timestamp": "2019-02-07",
+      "source": "BIS central bankers' speeches",
+      "doc_type": "cb_speech",
+      "file": "bis_mersch_2019-02-07.txt"
+    },
+    {
+      "doc_id": "fomc-minutes-20190130",
+      "timestamp": "2019-02-20",
+      "source": "Federal Reserve (FOMC)",
+      "doc_type": "fomc_minutes",
+      "file": "fomc_minutes_20190130_released_2019-02-20.txt"
+    },
+    {
+      "doc_id": "ecb_draghi_2019-02-22",
+      "timestamp": "2019-02-22",
+      "source": "ECB (all_ECB_speeches.csv)",
+      "doc_type": "cb_speech",
+      "file": "ecb_draghi_2019-02-22.txt"
+    }
+  ]
+}

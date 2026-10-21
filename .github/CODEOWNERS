@@ -1,0 +1,27 @@
+# CODEOWNERS — Track 2 public repository
+#
+# ## Status: PROPOSAL, not a live gate
+#
+# Committed because it is correct and costs nothing: it takes effect the moment required reviews
+# are turned on, with no second change needed. Until then the review rule is a project rule, as
+# AGENTS.md says. Activating enforcement is a governance action for the named human owner; no
+# repository file and no coding agent can do it or mark it done.
+
+*                                     @Agenthon-2026/track2-leads
+
+# The canonical scorer decides every published number. It needs the track lead specifically,
+# not just any reviewer: the private final scorer and the CodaBench scoring image both install
+# this package, so a change here changes production scoring on both entrypoints at once.
+/qfbench2_track_forecasting/          @Agenthon-2026/track2-leads
+/tests/                               @Agenthon-2026/track2-leads
+/regression_suite/                    @Agenthon-2026/track2-leads
+
+# Packaging fixes the identity of that scorer.
+/pyproject.toml                       @Agenthon-2026/track2-leads
+/Dockerfile                           @Agenthon-2026/track2-leads
+
+# CI is the only thing that runs the gates without a human.
+/.github/                             @Agenthon-2026/track2-leads
+
+# Unit material is the exam.
+/units/                               @Agenthon-2026/track2-leads @Agenthon-2026/track2-reviewers
