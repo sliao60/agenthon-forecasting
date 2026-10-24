@@ -23,6 +23,7 @@ class Config:
     path: bool = True       # True: cumulative daily path; False: independent draw per horizon
     scale: float = 1.0      # overall width multiplier
     window: int = 1500      # most recent rows used by the EWMA estimates
+    blend: float = 1.0      # weight on EWMA variance (1.0 = pure EWMA, 0.0 = full history)
 
 
 BASELINE = Config(vol="full", corr="full", dist="normal", path=False, scale=1.0)
@@ -76,6 +77,7 @@ def sample_levels(
     if cfg.vol == "ewma":
         sd = np.sqrt(np.diag(_ewma_cov(recent, cfg.lam)))
         sd = np.where(np.isfinite(sd) & (sd > 0), sd, full_sd)
+        sd = np.sqrt(cfg.blend * sd**2 + (1.0 - cfg.blend) * full_sd**2)
     else:
         sd = full_sd
     sd = sd * cfg.scale

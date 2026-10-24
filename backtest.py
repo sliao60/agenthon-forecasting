@@ -49,7 +49,7 @@ def normalized(c, b):
     return 0.714 * m / mb + 0.286 * t / tb
 
 
-def run(configs, n_cases, start="2012-01-01", n_draws=500):
+def run(configs, n_cases, start="2012-01-01", end=None, n_draws=500):
     panels = {k: load(v) for k, v in PANELS.items()}
     table = {}
     for task, (panel, assets, hs) in TASKS.items():
@@ -57,6 +57,8 @@ def run(configs, n_cases, start="2012-01-01", n_draws=500):
         vals = p.to_numpy()
         lo = int(np.searchsorted(p.index.values, np.datetime64(start)))
         hi = len(p) - max(hs) - 1
+        if end is not None:
+            hi = min(hi, int(np.searchsorted(p.index.values, np.datetime64(end))))
         rng = np.random.default_rng(0)
         idx = np.sort(rng.choice(np.arange(lo, hi), size=min(n_cases, hi - lo), replace=False))
         scores = {name: [] for name in configs}
@@ -80,6 +82,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--sweep", action="store_true")
+    ap.add_argument("--blend", action="store_true")
+    ap.add_argument("--start", default="2012-01-01")
+    ap.add_argument("--end", default=None)
     a = ap.parse_args()
     A = BASELINE
     B = variant(A, vol="ewma")
@@ -89,10 +94,13 @@ if __name__ == "__main__":
     configs = {"A_official": A, "B_+ewma_vol": B, "C_+fat_tails": C, "D_+path": D, "E_+ewma_corr": E}
     if a.sweep:
         for lam in (0.90, 0.97, 0.99):
-            configs[f"E_lam{lam}"] = variant(E, lam=lam)
+            configs[f"D_lam{lam}"] = variant(D, lam=lam)
         for df_ in (4.0, 8.0):
-            configs[f"E_df{df_:g}"] = variant(E, df=df_)
+            configs[f"D_df{df_:g}"] = variant(D, df=df_)
         for s in (0.9, 1.1):
-            configs[f"E_scale{s}"] = variant(E, scale=s)
+            configs[f"D_scale{s}"] = variant(D, scale=s)
+    if a.blend:
+        for w in (0.7, 0.5, 0.3):
+            configs[f"D_blend{w}"] = variant(D, blend=w)
     pd.set_option("display.width", 160)
-    print(run(configs, a.n).round(4))
+    print(run(configs, a.n, a.start, a.end).round(4))
