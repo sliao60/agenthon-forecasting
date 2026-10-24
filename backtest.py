@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Backtest: compare samplers on 1-4 business-day UST and G10 FX forecasts.
+Each case uses only data up to an as-of date and is scored against the realized values with the
+official Track 2 components. Scores are normalized by the official baseline on the same case
+(1.0 = baseline; lower is better), as the leaderboard does.
+Usage: python backtest.py [--n 300] [--sweep]"""
+import argparse
+
+import numpy as np
+import pandas as pd
+from qfbench2_common.scoring import crps
+from qfbench2_track_forecasting.scoring import TAIL_METRICS
+from qfbench2_track_forecasting.improved import BASELINE, Config, sample_levels, variant
+
+PANELS = {
+    "rates": "units/t2-F1-hawkish-cut-2024/rates_daily.parquet",
+    "fx": "units/t2-F3-election-2024-joint/g10_fx_daily.parquet",
+}
+TASKS = {
+    "ust_curve_1to4": ("rates", ["UST_2Y", "UST_5Y", "UST_10Y", "UST_30Y"], [1, 2, 3, 4]),
+    "ust10_1d":       ("rates", ["UST_10Y"], [1]),
+    "fx_g10_1to4":    ("fx", ["EUR", "GBP", "JPY", "CHF", "AUD", "CAD"], [1, 2, 3, 4]),
+    "eur_4d":         ("fx", ["EUR"], [4]),
+}
+TAIL = (0.01, 0.05, 0.95, 0.99)
+
+
+def load(path):
+    df = pd.read_parquet(path)
+    col = next(c for c in ("asset", "asset_id", "series") if c in df.columns)
+    df["date"] = pd.to_datetime(df["date"].astype(str).str[:10])
+    return df.pivot_table(index="date", columns=col, values="value").sort_index()
+
+
+def components(samples, y):
+    s = samples.reshape(samples.shape[0], -1)
+    yy = y.reshape(-1)
+    m = float(crps.crps_marginal(s, yy))
+    t = float(TAIL_METRICS["pinball"](s, yy, TAIL))
+    j = float(crps.variogram_score(s, yy, p=0.5)) if yy.size > 1 else 0.0
+    return m, j, t
+
+
+def normalized(c, b):
+    m, j, t = c
+    mb, jb, tb = b
+    if jb > 0:
+        return 0.5 * m / mb + 0.3 * j / jb + 0.2 * t / tb
+    return 0.714 * m / mb + 0.286 * t / tb
+
+
+def run(configs, n_cases, start="2012-01-01", n_draws=500):
+    panels = {k: load(v) for k, v in PANELS.items()}
+    table = {}
+    for task, (panel, assets, hs) in TASKS.items():
+        p = panels[panel][assets].dropna()
+        vals = p.to_numpy()
+        lo = int(np.searchsorted(p.index.values, np.datetime64(start)))
+        hi = len(p) - max(hs) - 1
+        rng = np.random.default_rng(0)
+        idx = np.sort(rng.choice(np.arange(lo, hi), size=min(n_cases, hi - lo), replace=False))
+        scores = {name: [] for name in configs}
+        for i in idx:
+            steps = np.diff(vals[: i + 1], axis=0)
+            last = vals[i]
+            y = np.stack([vals[i + h] for h in hs], axis=-1)  # (A, H)
+            base = components(sample_levels(steps, last, hs, n_draws, int(i), BASELINE), y)
+            for name, cfg in configs.items():
+                c = base if cfg == BASELINE else components(
+                    sample_levels(steps, last, hs, n_draws, int(i), cfg), y)
+                scores[name].append(normalized(c, base))
+        table[task] = {k: float(np.mean(v)) for k, v in scores.items()}
+        print(f"done {task} ({len(idx)} cases)", flush=True)
+    df = pd.DataFrame(table)
+    df["MEAN"] = df.mean(axis=1)
+    return df.sort_values("MEAN")
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--n", type=int, default=300)
+    ap.add_argument("--sweep", action="store_true")
+    a = ap.parse_args()
+    A = BASELINE
+    B = variant(A, vol="ewma")
+    C = variant(B, dist="t")
+    D = variant(C, path=True)
+    E = variant(D, corr="ewma")
+    configs = {"A_official": A, "B_+ewma_vol": B, "C_+fat_tails": C, "D_+path": D, "E_+ewma_corr": E}
+    if a.sweep:
+        for lam in (0.90, 0.97, 0.99):
+            configs[f"E_lam{lam}"] = variant(E, lam=lam)
+        for df_ in (4.0, 8.0):
+            configs[f"E_df{df_:g}"] = variant(E, df=df_)
+        for s in (0.9, 1.1):
+            configs[f"E_scale{s}"] = variant(E, scale=s)
+    pd.set_option("display.width", 160)
+    print(run(configs, a.n).round(4))

@@ -35,6 +35,10 @@ import pandas as pd
 from .horizons import HorizonMetadataError, monthly_horizon_steps
 from .limits import ParseLimits
 from .targets import log_return_steps
+from .improved import Config as _ImprovedConfig, sample_levels as _sample_levels
+
+# Improved daily level sampler: EWMA volatility, Student-t shocks, cumulative daily path.
+_IMPROVED = _ImprovedConfig(corr="full")
 
 DEFAULT_DRAWS = 500
 _RATIONALE_NAME = "forecast_rationale.md"
@@ -306,11 +310,15 @@ def _draw(
                 for i, a in enumerate(assets)
             },
         }
-    out = np.empty((n_draws, len(assets), len(horizons)), dtype=float)
-    for hi, h in enumerate(horizons):
-        z = rng.standard_normal((n_draws, len(assets))) @ chol.T
-        centre = drift * h if returns_target else last
-        out[:, :, hi] = centre + z * (sd * np.sqrt(h))
+    if returns_target:
+        out = np.empty((n_draws, len(assets), len(horizons)), dtype=float)
+        for hi, h in enumerate(horizons):
+            z = rng.standard_normal((n_draws, len(assets))) @ chol.T
+            out[:, :, hi] = drift * h + z * (sd * np.sqrt(h))
+    else:
+        out = _sample_levels(
+            steps.to_numpy(dtype=float), last, list(horizons), n_draws, seed, _IMPROVED
+        )
     meta = {
         "last": {a: float(last[i]) for i, a in enumerate(assets)},
         "daily_sd": {a: float(sd[i]) for i, a in enumerate(assets)},
