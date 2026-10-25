@@ -37,8 +37,22 @@ from .limits import ParseLimits
 from .targets import log_return_steps
 from .improved import Config as _ImprovedConfig, sample_levels as _sample_levels
 
-# Improved daily level sampler: EWMA volatility, Student-t shocks, cumulative daily path.
-_IMPROVED = _ImprovedConfig(corr="full", blend=0.3)
+# V3: Original submitted model.
+_V3_CONFIG = _ImprovedConfig(
+    corr="full",
+    blend=0.3,
+    scale=1.0,
+)
+
+# V4 candidate: Narrower forecast distribution.
+_V4_CONFIG = _ImprovedConfig(
+    corr="full",
+    blend=0.3,
+    scale=0.9,
+)
+
+# Active configuration.
+_IMPROVED = _V4_CONFIG
 
 DEFAULT_DRAWS = 500
 _RATIONALE_NAME = "forecast_rationale.md"
